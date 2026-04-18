@@ -11,7 +11,31 @@ export default function Hoteleria({ onAbrir360 }){
         const hoteleria = new mapboxgl.Map({
             container: hoteleriaRef.current,
             center: [-97.31908, 20.99095], //[lng, lat]
-            zoom: 15,
+            zoom: 16,
+            pitch: 60,
+            bearing: -20,
+        });
+
+        hoteleria.on("load", () => {
+            const layers = hoteleria.getStyle().bearing.toExponential.layers;
+            const labelLayerId = layers.find(
+                (layer) => layer.type === "symbol" && layer.layout["text-field"]
+            ).id;
+
+            hoteleria.addLayer ({
+                id: "3d-buildings",
+                source: "composite",
+                "source-layer": "building",
+                filter: ["==", "extrude", "true"],
+                type: "fill-extrusion",
+                minzoom: 15,
+                paint: {
+                    "fill-extrusion-color": "#aaa",
+                    "fill-extrusion-height": ["get", "height"],
+                    "fill-extrusion-base": ["get", "min_height"],
+                    "fill-extrusion-opacity": 0.6,
+                },
+            }, labelLayerId);
         });
 
         hoteleria.doubleClickZoom.disable();
@@ -21,13 +45,13 @@ export default function Hoteleria({ onAbrir360 }){
             <img src="/hotelElim.png" style="width:80px; border-radius:10px;"/>
             <h3>Hotel Elim</h3>
             <p>Habitaciones cómodas, alberca y wifi.</p>
-            <button id="VerTour">Ver Recorrido</button>
+            <button id="verTour">Ver Recorrido</button>
             </div>
         `);
 
         popup.on("open", () => {
             setTimeout(() => {
-                const btn = document.getElementById("VerTour");
+                const btn = document.getElementById("verTour");
                 if(btn) {
                     btn.onclick = () => {
                         if (onAbrir360) onAbrir360()
