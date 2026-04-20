@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "mapbox-gl": "^3.21.0",
+    "mapbox-gl": "^3.22.0",
+    "pannellum": "^2.5.7",
+    "pannellum-react": "^1.2.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
