@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "framer-motion": "^12.38.0",
     "mapbox-gl": "^3.22.0",
     "pannellum": "^2.5.7",
     "pannellum-react": "^1.2.4",
