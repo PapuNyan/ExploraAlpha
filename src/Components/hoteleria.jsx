@@ -4,18 +4,20 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-export default function Hoteleria({ onAbrir360 }) {
+export default function Hoteleria({ onAbrir360, onAbrirDrawer }) { 
   const hoteleriaRef = useRef(null);
 
   useEffect(() => {
     // 1. Configuración cinemática inicial (FOV Effect)
+    // En tu hoteleria.jsx
     const hoteleria = new mapboxgl.Map({
-      container: hoteleriaRef.current,
-      center: [-97.31908, 20.99095],
-      zoom: 16,
-      pitch: 65,      // Inclinación alta para profundidad
-      bearing: -40,   // Rotación lateral para dinamismo
-      antialias: true // Bordes suaves en edificios 3D
+    container: hoteleriaRef.current,
+    style: 'mapbox://styles/mapbox/streets-v12', // <--- AGREGA ESTA LÍNEA
+    center: [-97.31908, 20.99095],
+    zoom: 16,
+    pitch: 65,
+    bearing: -40,
+    antialias: true 
     });
 
     hoteleria.on("load", () => {
@@ -64,12 +66,15 @@ export default function Hoteleria({ onAbrir360 }) {
         </div>
     `);
 
+    // En hoteleria.jsx, dentro del popup.on("open"):
     popup.on("open", () => {
-      const btn = document.getElementById("verTour");
-      if (btn) {
-        btn.onclick = () => onAbrir360();
-      }
-    });
+    const btn = document.getElementById("verTour");
+    if (btn) {
+        btn.onclick = () => {
+            if (onAbrir360) onAbrir360(); 
+        };
+    }
+});
 
     // Marcador
     const el = document.createElement("div");
@@ -87,13 +92,13 @@ export default function Hoteleria({ onAbrir360 }) {
 
     // Eventos
     marker.getElement().addEventListener("click", () => {
-      console.log("Click en marker");
-    });
+    if (onAbrirDrawer) onAbrirDrawer();
+});
 
     return () => hoteleria.remove();
   }, [onAbrir360]);
 
   return (
-    <div ref={hoteleriaRef} style={{ width: "100%", height: "100vh" }} />
+    <div ref={hoteleriaRef} style={{ width: "100%", height: "100%" }} />
   );
 }
