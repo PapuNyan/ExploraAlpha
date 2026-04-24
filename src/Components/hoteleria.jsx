@@ -4,101 +4,181 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-export default function Hoteleria({ onAbrir360, onAbrirDrawer }) { 
-  const hoteleriaRef = useRef(null);
+export default function Hoteleria({ onAbrirDetalles }) {
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+
+  const onAbrirDetallesRef = useRef(onAbrirDetalles);
+  useEffect(() => {
+    onAbrirDetallesRef.current = onAbrirDetalles;
+  }, [onAbrirDetalles]);
 
   useEffect(() => {
-    // 1. Configuración cinemática inicial (FOV Effect)
-    // En tu hoteleria.jsx
-    const hoteleria = new mapboxgl.Map({
-    container: hoteleriaRef.current,
-    style: 'mapbox://styles/mapbox/streets-v12', // <--- AGREGA ESTA LÍNEA
-    center: [-97.31908, 20.99095],
-    zoom: 16,
-    pitch: 65,
-    bearing: -40,
-    antialias: true 
-    });
+    if (map.current) return;
+    if (!mapContainer.current) return;
 
-    hoteleria.on("load", () => {
-      // Capa de edificios 3D
-      const layers = hoteleria.getStyle().layers;
-      const labelLayerId = layers.find(
-        (layer) => layer.type === "symbol" && layer.layout["text-field"]
-      )?.id;
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [-97.3195, 20.9907],
+        zoom: 16.5,
+        pitch: 65,      
+        bearing: -40,   
+        antialias: true 
+      });
 
-      hoteleria.addLayer({
-        id: "3d-buildings",
-        source: "composite",
-        "source-layer": "building",
-        filter: ["==", "extrude", "true"],
-        type: "fill-extrusion",
-        minzoom: 15,
-        paint: {
-          "fill-extrusion-color": "#aaa",
-          "fill-extrusion-height": ["get", "height"],
-          "fill-extrusion-base": ["get", "min_height"],
-          "fill-extrusion-opacity": 0.8, // Un poco más opaco para estilo moderno
-        },
-      }, labelLayerId);
+      map.current.on("load", () => {
+        const style = map.current.getStyle();
+        if (style && style.sources && style.sources.composite) {
+          const layers = style.layers;
+          const labelLayerId = layers.find(
+            (layer) => layer.type === "symbol" && layer.layout["text-field"]
+          )?.id;
 
-      // 2. Efecto de cámara al cargar (Cinematic In)
-      setTimeout(() => {
-        hoteleria.easeTo({
-          pitch: 75,
-          bearing: -60,
-          zoom: 17.5,
-          duration: 6000, // Duración de 6 segundos
-          essential: true
-        });
-      }, 500);
-    });
+          map.current.addLayer({
+            id: "3d-buildings",
+            source: "composite",
+            "source-layer": "building",
+            filter: ["==", "extrude", "true"],
+            type: "fill-extrusion",
+            minzoom: 15,
+            paint: {
+              "fill-extrusion-color": "#aaa",
+              "fill-extrusion-height": ["get", "height"],
+              "fill-extrusion-base": ["get", "min_height"],
+              "fill-extrusion-opacity": 0.8, 
+            },
+          }, labelLayerId);
+        }
 
-    hoteleria.doubleClickZoom.disable();
+        setTimeout(() => {
+          if (map.current) {
+            map.current.easeTo({
+              pitch: 75,
+              bearing: -60,
+              zoom: 17.5,
+              duration: 6000, 
+              essential: true
+            });
+          }
+        }, 500);
+      });
 
-    // Popup del Hotel
-    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(` 
-        <div style="text-align:center;">
-          <img src="/hotelElim.png" style="width:80px; border-radius:10px;"/>
-          <h3>Hotel Elim</h3>
-          <p>Habitaciones cómodas, alberca y wifi.</p>
-          <button id="verTour" style="cursor:pointer;">Ver Recorrido</button>
-        </div>
-    `);
+      map.current.doubleClickZoom.disable();
 
-    // En hoteleria.jsx, dentro del popup.on("open"):
-    popup.on("open", () => {
-    const btn = document.getElementById("verTour");
-    if (btn) {
-        btn.onclick = () => {
-            if (onAbrir360) onAbrir360(); 
-        };
+      // ==========================================
+      // 1. MARCADOR Y POPUP PARA CASA ELIM
+      // ==========================================
+      // NOTA: Agregamos className: 'airbnb-popup'
+      const popupElim = new mapboxgl.Popup({ offset: 25, closeButton: false, className: 'airbnb-popup' }).setHTML(` 
+          <div style="width: 250px; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.12); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: left; background-color: #fff;">
+            <img src="/hotelElim.png" style="width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid #f0f0f0; display: block;"/>
+            <div style="padding: 12px 15px;">
+              <div style="display: flex; align-items: center; justify-content: start; gap: 4px; font-size: 13px; color: #222; margin-bottom: 5px;">
+                <span style="color: #FF5A5F; font-size: 14px;">★</span>
+                <span style="font-weight: 600;">4.9</span>
+                <span style="color: #717171; margin-left: 1px;">(15 reseñas)</span>
+              </div>
+              <h3 style="margin: 0 0 2px 0; color: #222; font-weight: 600; font-size: 17px;">Casa de playa ELIM</h3>
+              <p style="margin: 0 0 10px 0; font-size: 14px; color: #717171;">Lugar completo • Tuxpan, Ver.</p>
+              <p style="margin: 0 0 12px 0; font-size: 15px; color: #222;">
+                <strong style="font-weight: 700;">$2,000 MXN</strong> noche
+              </p>
+              <button id="btnDetallesElim" style="cursor:pointer; background: #222; color: white; padding: 10px 15px; border-radius: 8px; margin-top: 5px; border: none; font-weight: bold; width: 100%; font-size: 14px;">Ver Detalles</button>
+            </div>
+          </div>
+      `);
+
+      popupElim.on("open", () => {
+        const btn = document.getElementById("btnDetallesElim");
+        if (btn) btn.onclick = () => { if (onAbrirDetallesRef.current) onAbrirDetallesRef.current('elim'); };
+      });
+
+      const elElim = document.createElement("div");
+      elElim.style.backgroundImage = "url('/hotelElim.png')";
+      elElim.style.width = "45px";
+      elElim.style.height = "45px";
+      elElim.style.backgroundSize = "cover";
+      elElim.style.borderRadius = "50%";
+      elElim.style.border = "3px solid white";
+      elElim.style.boxShadow = "0 4px 10px rgba(0,0,0,0.3)";
+      elElim.style.cursor = "pointer";
+
+      new mapboxgl.Marker(elElim).setLngLat([-97.31908, 20.99095]).setPopup(popupElim).addTo(map.current);
+
+      // ==========================================
+      // 2. MARCADOR Y POPUP PARA HOTEL BOKETTO
+      // ==========================================
+      // NOTA: Agregamos className: 'airbnb-popup'
+      const popupBoketto = new mapboxgl.Popup({ offset: 25, closeButton: false, className: 'airbnb-popup' }).setHTML(` 
+          <div style="width: 250px; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.12); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: left; background-color: #fff;">
+            <img src="/hotelElim.png" style="width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid #f0f0f0; display: block;"/>
+            <div style="padding: 12px 15px;">
+              <div style="display: flex; align-items: center; justify-content: start; gap: 4px; font-size: 13px; color: #222; margin-bottom: 5px;">
+                <span style="color: #FF5A5F; font-size: 14px;">★</span>
+                <span style="font-weight: 600;">Nuevo</span>
+                <span style="color: #717171; margin-left: 1px;">(0 reseñas)</span>
+              </div>
+              <h3 style="margin: 0 0 2px 0; color: #222; font-weight: 600; font-size: 17px;">Hotel Boketto</h3>
+              <p style="margin: 0 0 10px 0; font-size: 14px; color: #717171;">Habitación privada • Tuxpan, Ver.</p>
+              <p style="margin: 0 0 12px 0; font-size: 15px; color: #222;">
+                <strong style="font-weight: 700;">$2,500 MXN</strong> noche
+              </p>
+              <button id="btnDetallesBoketto" style="cursor:pointer; background: #0f766e; color: white; padding: 10px 15px; border-radius: 8px; margin-top: 5px; border: none; font-weight: bold; width: 100%; font-size: 14px;">Ver Detalles</button>
+            </div>
+          </div>
+      `);
+
+      popupBoketto.on("open", () => {
+        const btn = document.getElementById("btnDetallesBoketto");
+        if (btn) btn.onclick = () => { if (onAbrirDetallesRef.current) onAbrirDetallesRef.current('boketto'); };
+      });
+
+      const elBoketto = document.createElement("div");
+      elBoketto.style.backgroundColor = "#0f766e"; 
+      elBoketto.style.width = "45px";
+      elBoketto.style.height = "45px";
+      elBoketto.style.borderRadius = "50%";
+      elBoketto.style.border = "3px solid white";
+      elBoketto.style.boxShadow = "0 4px 10px rgba(0,0,0,0.3)";
+      elBoketto.style.cursor = "pointer";
+      elBoketto.style.display = "flex";
+      elBoketto.style.alignItems = "center";
+      elBoketto.style.justifyContent = "center";
+      elBoketto.innerHTML = "<span style='color:white; font-weight:bold; font-size:16px; font-family: sans-serif;'>B</span>";
+
+      new mapboxgl.Marker(elBoketto).setLngLat([-97.319921, 20.99048]).setPopup(popupBoketto).addTo(map.current);
+
+    } catch (error) {
+      console.error("🚨 Error detectado en Mapbox:", error);
     }
-});
 
-    // Marcador
-    const el = document.createElement("div");
-    el.style.backgroundImage = "url('/hotelElim.png')";
-    el.style.width = "40px";
-    el.style.height = "40px";
-    el.style.backgroundSize = "cover";
-    el.style.borderRadius = "50%";
-    el.style.border = "2px solid white";
-
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat([-97.31908, 20.99095])
-      .setPopup(popup)
-      .addTo(hoteleria);
-
-    // Eventos
-    marker.getElement().addEventListener("click", () => {
-    if (onAbrirDrawer) onAbrirDrawer();
-});
-
-    return () => hoteleria.remove();
-  }, [onAbrir360]);
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
 
   return (
-    <div ref={hoteleriaRef} style={{ width: "100%", height: "100%" }} />
+    <>
+      {/* MAGIA CSS: Limpiamos el contenedor por defecto de Mapbox */}
+      <style>{`
+        .airbnb-popup .mapboxgl-popup-content {
+          padding: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        /* Ajustamos el triangulito para que coincida con la tarjeta blanca */
+        .airbnb-popup .mapboxgl-popup-tip {
+          border-top-color: white !important;
+          border-bottom-color: white !important;
+        }
+      `}</style>
+      
+      <div ref={mapContainer} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+    </>
   );
 }
