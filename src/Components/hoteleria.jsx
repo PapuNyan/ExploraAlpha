@@ -27,6 +27,9 @@ export default function Hoteleria({ onAbrir360, onAbrirDrawer }) {
         (layer) => layer.type === "symbol" && layer.layout["text-field"]
       )?.id;
 
+      const centro = [-97.31908, 20.99095];
+      const tamano = 0.00008;
+
       hoteleria.addLayer({
         id: "3d-buildings",
         source: "composite",
@@ -41,6 +44,44 @@ export default function Hoteleria({ onAbrir360, onAbrirDrawer }) {
           "fill-extrusion-opacity": 0.8, // Un poco más opaco para estilo moderno
         },
       }, labelLayerId);
+
+      hoteleria.addLayer({
+        id: "edificio-destacado",
+        source: "composite",
+        "source-layer" : "building",
+        type: "fill-extrusion",
+        minzoom: 15,
+        filter: ["within", {
+          type: "Polygon",
+          coordinates: [[
+            [centro[0] - tamano, centro[1] + tamano],
+            [centro[0] + tamano, centro[1] + tamano],
+            [centro[0] + tamano, centro[1] - tamano],
+            [centro[0] - tamano, centro[1] - tamano],
+            [centro[0] - tamano, centro[1] + tamano]
+          ]]
+        }],
+        paint: {
+          "fill-extrusion-color" : "#ff00ff",
+          "fill-extrusion-height" : [
+            "*",
+            ["get", "height"],
+            2
+          ],
+          "fill-extrusion-opacity" : 1
+        }
+      });
+
+      let activo = false;
+      hoteleria.on("click", ()  => {
+        activo = !activo;
+
+        hoteleria.setPaintProperty(
+          "edificio-destacado",
+          "fill-extrusion-color",
+          activo ? "#00ffcc" : "ff00ff"
+        );
+      });
 
       // 2. Efecto de cámara al cargar (Cinematic In)
       setTimeout(() => {
