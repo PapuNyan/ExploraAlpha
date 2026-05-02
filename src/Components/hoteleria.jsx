@@ -3,219 +3,167 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+const BRAND = '#FF6B35';
 
-const AIRBNB_PINK = '#FF5A5F';
-
-// 1. BASE DE DATOS CENTRALIZADA: Toda la info visual ahora vive aquí
+// --- 1. BASE DE DATOS COMPACTADA ---
 const ubicaciones = {
-  elim: { 
-    nombre: "Casa de playa ELIM", 
-    lngLat: [-97.31908, 20.99095],
-    precio: "$2,000 MXN",
-    etiqueta: "4.9",
-    reviews: "(15 reseñas)",
-    subtitulo: "Lugar completo • Tuxpan, Ver.",
-    colorTema: "#222",
-    marcadorImg: "url('/hotelElim.png')",
-    marcadorHtml: "" // Vacío porque usa imagen
-  },
-  boketto: { 
-    nombre: "Hotel Boketto", 
-    lngLat: [-97.319921, 20.99048],
-    precio: "$2,500 MXN",
-    etiqueta: "Nuevo",
-    reviews: "(0 reseñas)",
-    subtitulo: "Habitación privada • Tuxpan, Ver.",
-    colorTema: "#0f766e",
-    marcadorImg: "none",
-    marcadorHtml: "<span style='color:white; font-weight:bold; font-size:16px; font-family: sans-serif;'>B</span>"
-  }
+  elim: { nombre: "Casa de playa ELIM", lngLat: [-97.31908, 20.99095], precio: "$2,000 MXN", etiqueta: "4.9 ★", reviews: "15 reseñas", subtitulo: "Lugar completo · Tuxpan, Ver.", colorTema: BRAND, marcadorImg: "url('/hotelElim.png')", imagenPopup: "/hotelElim.png", marcadorHtml: "" },
+  boketto: { nombre: "Hotel Boketto", lngLat: [-97.319873, 20.990532], precio: "$2,500 MXN", etiqueta: "Nuevo", reviews: "0 reseñas", subtitulo: "Habitación privada · Tuxpan, Ver.", colorTema: "#FF6B35", marcadorImg: "url('/hotelBoketto.jpg')", imagenPopup: "/hotelBoketto.jpg", marcadorHtml: "" }
 };
 
+const bokettoPoly = {
+  type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[ [-97.32002, 20.990538], [-97.319755, 20.990638], [-97.319728, 20.99058], [-97.319747, 20.990569], [-97.319726, 20.990519], [-97.319972, 20.990427], [-97.32002, 20.990538] ]] } }]
+};
+
+// --- 2. FUNCIONES HELPER ---
+const getPopupHtml = (id, d) => `
+  <div class="popup-card">
+    <div class="popup-header">
+      <img src="${d.imagenPopup}" />
+      <div class="popup-badge" style="color:${d.colorTema}">${d.etiqueta}</div>
+    </div>
+    <div class="popup-body">
+      <h3>${d.nombre}</h3><p class="subtitle">${d.subtitulo}</p>
+      <div class="price-row"><span><strong>${d.precio}</strong> <small>/ noche</small></span><span class="reviews">${d.reviews}</span></div>
+      <button id="btnDet-${id}" style="background:${d.colorTema}">Ver detalles →</button>
+    </div>
+  </div>`;
+
+const createMarker = (d) => {
+  const p = document.createElement("div"), c = document.createElement("div");
+  c.className = "marker-child"; 
+  if (d.marcadorImg !== "none") c.style.backgroundImage = d.marcadorImg;
+  else { c.style.backgroundColor = d.colorTema; c.innerHTML = d.marcadorHtml; }
+  p.appendChild(c); return p;
+};
+
+// --- 3. COMPONENTE PRINCIPAL ---
 export default function Hoteleria({ onAbrirDetalles }) {
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-  const marcadoresRef = useRef({}); 
-
-  const [busqueda, setBusqueda] = useState('');
-  const [sugerencias, setSugerencias] = useState([]);
-
-  const onAbrirDetallesRef = useRef(onAbrirDetalles);
-  useEffect(() => { onAbrirDetallesRef.current = onAbrirDetalles; }, [onAbrirDetalles]);
+  const mapContainer = useRef(null), map = useRef(null), marcadoresRef = useRef({});
+  const [busqueda, setBusqueda] = useState(''), [sugerencias, setSugerencias] = useState([]), [is3D, setIs3D] = useState(true);
+  
+  const onAbrirRef = useRef(onAbrirDetalles);
+  useEffect(() => { onAbrirRef.current = onAbrirDetalles; }, [onAbrirDetalles]);
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current, style: 'mapbox://styles/mapbox/streets-v12',
+      center: [-97.3195, 20.9907], zoom: 16.5, pitch: 65, bearing: -40, antialias: true, projection: 'globe'
+    });
+    map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [-97.3195, 20.9907],
-        zoom: 16.5,
-        pitch: 65,      
-        bearing: -40,   
-        antialias: true 
+    map.current.on("load", () => {
+      map.current.setFog({ 'color': '#bad2eb', 'high-color': '#245cdf', 'horizon-blend': 0.02, 'space-color': '#0b0b19', 'star-intensity': 0.6 });
+      
+      map.current.addSource('boketto-src', { type: 'geojson', data: bokettoPoly });
+      map.current.addLayer({
+        id: 'boketto-layer', type: 'fill-extrusion', source: 'boketto-src',
+        paint: { 'fill-extrusion-color': '#00FFFF', 'fill-extrusion-height': 15, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.9 }
       });
-
-      map.current.on("load", () => {
-        const style = map.current.getStyle();
-        if (style?.sources?.composite) {
-          const labelLayerId = style.layers.find(layer => layer.type === "symbol" && layer.layout["text-field"])?.id;
-          map.current.addLayer({
-            id: "3d-buildings",
-            source: "composite",
-            "source-layer": "building",
-            filter: ["==", "extrude", "true"],
-            type: "fill-extrusion",
-            minzoom: 15,
-            paint: {
-              "fill-extrusion-color": "#aaa",
-              "fill-extrusion-height": ["get", "height"],
-              "fill-extrusion-base": ["get", "min_height"],
-              "fill-extrusion-opacity": 0.8, 
-            },
-          }, labelLayerId);
-        }
-
-        setTimeout(() => {
-          if (map.current) map.current.easeTo({ pitch: 75, bearing: -60, zoom: 17.5, duration: 6000, essential: true });
-        }, 500);
+      
+      map.current.on('click', 'boketto-layer', () => {
+        Object.values(marcadoresRef.current).forEach(m => m.getPopup()?.remove());
+        marcadoresRef.current['boketto']?.togglePopup();
       });
+      map.current.on('mouseenter', 'boketto-layer', () => map.current.getCanvas().style.cursor = 'pointer');
+      map.current.on('mouseleave', 'boketto-layer', () => map.current.getCanvas().style.cursor = '');
+      
+      setTimeout(() => map.current?.easeTo({ pitch: 75, bearing: -60, zoom: 17.5, duration: 6000 }), 500);
+    });
 
-      map.current.doubleClickZoom.disable();
-
-      // =========================================================
-      // 2. GENERACIÓN DINÁMICA DE MARCADORES (El código optimizado)
-      // =========================================================
-      Object.entries(ubicaciones).forEach(([id, data]) => {
-        
-        // Plantilla única de HTML que se llena con los datos de arriba
-        const popupHtml = ` 
-          <div style="width: 250px; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.12); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: left; background-color: #fff;">
-            <img src="/hotelElim.png" style="width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid #f0f0f0; display: block;"/>
-            <div style="padding: 12px 15px;">
-              <div style="display: flex; align-items: center; justify-content: start; gap: 4px; font-size: 13px; color: #222; margin-bottom: 5px;">
-                <span style="color: ${AIRBNB_PINK}; font-size: 14px;">★</span>
-                <span style="font-weight: 600;">${data.etiqueta}</span>
-                <span style="color: #717171; margin-left: 1px;">${data.reviews}</span>
-              </div>
-              <h3 style="margin: 0 0 2px 0; color: #222; font-weight: 600; font-size: 17px;">${data.nombre}</h3>
-              <p style="margin: 0 0 10px 0; font-size: 14px; color: #717171;">${data.subtitulo}</p>
-              <p style="margin: 0 0 12px 0; font-size: 15px; color: #222;">
-                <strong style="font-weight: 700;">${data.precio}</strong> noche
-              </p>
-              <button id="btnDetalles-${id}" style="cursor:pointer; background: ${data.colorTema}; color: white; padding: 10px 15px; border-radius: 8px; margin-top: 5px; border: none; font-weight: bold; width: 100%; font-size: 14px;">Ver Detalles</button>
-            </div>
-          </div>
-        `;
-
-        const popup = new mapboxgl.Popup({ offset: 25, closeButton: false, className: 'airbnb-popup' }).setHTML(popupHtml);
-
-        popup.on("open", () => {
-          const btn = document.getElementById(`btnDetalles-${id}`);
-          if (btn) btn.onclick = () => { if (onAbrirDetallesRef.current) onAbrirDetallesRef.current(id); };
-        });
-
-        const el = document.createElement("div");
-        el.style.width = "45px";
-        el.style.height = "45px";
-        el.style.borderRadius = "50%";
-        el.style.border = "3px solid white";
-        el.style.boxShadow = "0 4px 10px rgba(0,0,0,0.3)";
-        el.style.cursor = "pointer";
-        
-        // Diferenciamos si usa imagen (Elim) o color plano con texto (Boketto)
-        if (data.marcadorImg !== "none") {
-          el.style.backgroundImage = data.marcadorImg;
-          el.style.backgroundSize = "cover";
-        } else {
-          el.style.backgroundColor = data.colorTema;
-          el.style.display = "flex";
-          el.style.alignItems = "center";
-          el.style.justifyContent = "center";
-          el.innerHTML = data.marcadorHtml;
-        }
-
-        marcadoresRef.current[id] = new mapboxgl.Marker(el)
-          .setLngLat(data.lngLat)
-          .setPopup(popup)
-          .addTo(map.current);
+    Object.entries(ubicaciones).forEach(([id, data]) => {
+      const popup = new mapboxgl.Popup({ offset: 25, closeButton: false, className: 'explora-popup' }).setHTML(getPopupHtml(id, data));
+      popup.on("open", () => {
+        const btn = document.getElementById(`btnDet-${id}`);
+        if (btn) btn.onclick = () => onAbrirRef.current?.(id);
       });
-
-    } catch (error) {
-      console.error("🚨 Error detectado en Mapbox:", error);
-    }
-
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
+      marcadoresRef.current[id] = new mapboxgl.Marker(createMarker(data)).setLngLat(data.lngLat).setPopup(popup).addTo(map.current);
+    });
+    
+    return () => { map.current?.remove(); map.current = null; };
   }, []);
 
-  const manejarBusqueda = (texto) => {
-    setBusqueda(texto);
-    if (texto.trim() === '') return setSugerencias([]);
-    
-    const filtrados = Object.entries(ubicaciones).filter(([, data]) =>
-      data.nombre.toLowerCase().includes(texto.toLowerCase())
-    );
-    setSugerencias(filtrados);
+  const buscar = (txt) => {
+    setBusqueda(txt);
+    setSugerencias(!txt.trim() ? [] : Object.entries(ubicaciones).filter(([, d]) => d.nombre.toLowerCase().includes(txt.toLowerCase())));
   };
 
-  const irAUbicacion = (id, lngLat) => {
-    if (map.current) {
-      map.current.flyTo({ center: lngLat, zoom: 18.5, pitch: 65, bearing: -40, duration: 2500, essential: true });
-
-      Object.values(marcadoresRef.current).forEach(marcador => {
-        if (marcador.getPopup()?.isOpen()) marcador.getPopup().remove();
-      });
-
-      if (marcadoresRef.current[id]) {
-        const targetPopup = marcadoresRef.current[id].getPopup();
-        if (!targetPopup.isOpen()) marcadoresRef.current[id].togglePopup();
-      }
-    }
-    setBusqueda('');
-    setSugerencias([]);
+  const ir = (id, lngLat) => {
+    map.current?.flyTo({ center: lngLat, zoom: 18.5, pitch: is3D ? 65 : 0, bearing: -40, duration: 2500 });
+    Object.values(marcadoresRef.current).forEach(m => m.getPopup()?.remove());
+    marcadoresRef.current[id]?.togglePopup();
+    setBusqueda(''); setSugerencias([]);
   };
+
+  const alternar = () => { map.current?.easeTo({ pitch: is3D ? 0 : 65, duration: 1200 }); setIs3D(!is3D); };
 
   return (
     <>
       <style>{`
-        .airbnb-popup .mapboxgl-popup-content { padding: 0 !important; background: transparent !important; box-shadow: none !important; }
-        .airbnb-popup .mapboxgl-popup-tip { border-top-color: white !important; border-bottom-color: white !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap');
+        .ui-font { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Popups de Mapbox */
+        .explora-popup .mapboxgl-popup-content { padding: 0 !important; background: transparent !important; box-shadow: none !important; border-radius: 16px !important; }
+        .explora-popup .mapboxgl-popup-tip { border-top-color: white !important; }
+        .popup-card { width: 260px; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.14); background: #fff; }
+        .popup-header { position: relative; } .popup-header img { width: 100%; height: 145px; object-fit: cover; display: block; }
+        .popup-badge { position: absolute; top: 10px; left: 10px; background: #fff; border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .popup-body { padding: 14px 16px; } .popup-body h3 { margin: 0 0 2px; font-weight: 800; font-size: 15px; color: #1A1A1A; }
+        .subtitle { margin: 0 0 8px; font-size: 12px; color: #6B7280; }
+        .price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .price-row strong { font-weight: 900; color: #1A1A1A; font-size: 14px; } .price-row small, .reviews { color: #6B7280; font-size: 12px; }
+        .popup-body button { width: 100%; padding: 10px; border: none; border-radius: 10px; color: #fff; font-weight: 800; font-size: 13px; cursor: pointer; }
+        
+        /* Animación Marcadores */
+        .marker-child { width: 48px; height: 48px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; background: #E5E7EB center/cover; }
+        .marker-child:hover { transform: scale(1.15); }
+        
+        /* UI Buscador y Botones */
+        /* AQUÍ FUE EL CAMBIO: left: 24px en lugar de 50%, y quitamos el transform */
+        .search-box { position: absolute; top: 24px; left: 24px; z-index: 10; width: 340px; max-width: 90vw; }
+        /* AQUÍ FUE EL CAMBIO: text-align: left para que el logo acompañe la esquina */
+        .logo-pill { text-align: left; margin-bottom: 10px; padding-left: 10px; } 
+        .logo-pill span { background: linear-gradient(135deg, #FF6B35, #FF8C5A); color: #fff; font-weight: 900; font-size: 14px; padding: 5px 16px; border-radius: 20px; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(255,107,53,0.4); }
+        .input-wrapper { display: flex; align-items: center; background: #fff; border-radius: 24px; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1.5px solid rgba(255,107,53,0.15); }
+        .input-wrapper input { border: none; width: 100%; font-size: 14px; font-weight: 500; color: #1A1A1A; outline: none; } .input-wrapper input::placeholder { color: #9CA3AF; }
+        .sugg-hbox { margin-top: 8px; background: #fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; }
+        .sugg-item { padding: 13px 18px; cursor: pointer; border-bottom: 1px solid #F3F4F6; font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 10px; transition: background 0.15s; }
+        .sugg-item:hover { background: #FFF0EB; } .sugg-icon { background: #FFF0EB; padding: 7px; border-radius: 8px; font-size: 16px; }
+        
+        .btn-3d { position: absolute; top: 10px; right: 24px; z-index: 10; background: #fff; border: 1.5px solid rgba(255,107,53,0.2); border-radius: 24px; padding: 10px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); cursor: pointer; font-size: 13px; font-weight: 700; color: #1A1A1A; transition: 0.2s; }
+        .btn-3d:hover { background: #FFF0EB; color: #FF6B35; }
       `}</style>
 
-      <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10, width: '320px', maxWidth: '90vw' }}>
-        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'white', borderRadius: '24px', padding: '12px 20px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-          <span style={{ marginRight: '12px', fontSize: '18px' }}>🔍</span>
-          <input
-            type="text" placeholder="Buscar destino o hotel..." value={busqueda}
-            onChange={(e) => manejarBusqueda(e.target.value)}
-            style={{ border: 'none', outline: 'none', width: '100%', fontSize: '15px', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', color: '#222' }}
-          />
+      {/* Interfaz Gráfica */}
+      <div className="search-box ui-font">
+        <div className="logo-pill"><span>EXPLORA</span></div>
+        <div className="input-wrapper">
+          <span style={{ marginRight: '10px' }}>🔍</span>
+          <input className="ui-font" type="text" placeholder="Buscar destino o alojamiento..." value={busqueda} onChange={e => buscar(e.target.value)} />
         </div>
-
+        
         {sugerencias.length > 0 && (
-          <div style={{ marginTop: '8px', backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
-            {sugerencias.map(([id, data]) => (
-              <div
-                key={id} onClick={() => irAUbicacion(id, data.lngLat)}
-                style={{ padding: '14px 20px', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', fontSize: '15px', color: '#222', display: 'flex', alignItems: 'center' }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f7f7f7'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
-              >
-                <span style={{ backgroundColor: '#f0f0f0', padding: '8px', borderRadius: '8px', marginRight: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📍</span>
-                {data.nombre}
+          <div className="sugg-box">
+            {sugerencias.map(([id, d]) => (
+              <div key={id} className="sugg-item" onClick={() => ir(id, d.lngLat)}>
+                <span className="sugg-icon">📍</span>
+                <div>
+                  <p style={{ margin: 0 }}>{d.nombre}</p>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#6B7280' }}>{d.subtitulo}</p>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div ref={mapContainer} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+      <button className="btn-3d ui-font" onClick={alternar}>{is3D ? '🗺️ 2D' : '🏙️ 3D'}</button>
+      
+      {/* Contenedor del Mapa */}
+      <div ref={mapContainer} style={{ position: "absolute", inset: 0 }} />
     </>
   );
 }
