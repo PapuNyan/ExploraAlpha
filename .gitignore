@@ -1,24 +1,25 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
 
-node_modules
-dist
-dist-ssr
-*.local
+# Testing
+/coverage
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Producción
+/dist
+/build
+
+# Varios (Archivos basura de sistema y herramientas)
+.claude/
+.ide/
+.bash_history
+.lesshst
+*.jar
+*.swp
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Variables de entorno (Seguridad)
+.env
+.env.local
