@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
+{/* NUEVO: Importamos el SVG como un componente de React */}
+import exploraLogo from './ExploraNaranja.png';
+
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-const BRAND = '#FF6B35';
+const BRAND = '#ff6b00';
 
 // --- 1. BASE DE DATOS COMPACTADA ---
 const ubicaciones = {
@@ -30,11 +33,17 @@ const getPopupHtml = (id, d) => `
   </div>`;
 
 const createMarker = (d) => {
-  const p = document.createElement("div"), c = document.createElement("div");
-  c.className = "marker-child"; 
-  if (d.marcadorImg !== "none") c.style.backgroundImage = d.marcadorImg;
-  else { c.style.backgroundColor = d.colorTema; c.innerHTML = d.marcadorHtml; }
-  p.appendChild(c); return p;
+  const p = document.createElement("div");
+  const c = document.createElement("div");
+  
+  // Le asignamos la nueva clase estilo Airbnb
+  c.className = "marcador-precio"; 
+  
+  // Le inyectamos el precio que viene desde tu base de datos (ej. "$2,000 MXN")
+  c.innerHTML = d.precio; 
+  
+  p.appendChild(c); 
+  return p;
 };
 
 // --- 3. COMPONENTE PRINCIPAL ---
@@ -60,7 +69,7 @@ export default function Hoteleria({ onAbrirDetalles }) {
       map.current.addSource('boketto-src', { type: 'geojson', data: bokettoPoly });
       map.current.addLayer({
         id: 'boketto-layer', type: 'fill-extrusion', source: 'boketto-src',
-        paint: { 'fill-extrusion-color': '#00FFFF', 'fill-extrusion-height': 15, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.9 }
+        paint: { 'fill-extrusion-color': '#f34ef3', 'fill-extrusion-height': 15, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.9 }
       });
       
       map.current.on('click', 'boketto-layer', () => {
@@ -117,16 +126,47 @@ export default function Hoteleria({ onAbrirDetalles }) {
         .price-row strong { font-weight: 900; color: #1A1A1A; font-size: 14px; } .price-row small, .reviews { color: #6B7280; font-size: 12px; }
         .popup-body button { width: 100%; padding: 10px; border: none; border-radius: 10px; color: #fff; font-weight: 800; font-size: 13px; cursor: pointer; }
         
-        /* Animación Marcadores */
-        .marker-child { width: 48px; height: 48px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; background: #E5E7EB center/cover; }
-        .marker-child:hover { transform: scale(1.15); }
+        /* Animación Marcadores (Estilo Precio) */
+        .marcador-precio { 
+          background-color: white; 
+          color: #1A1A1A; 
+          font-weight: 800; 
+          padding: 8px 14px; 
+          border-radius: 20px; 
+          box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2); 
+          cursor: pointer; 
+          font-size: 14px; 
+          transition: transform 0.2s ease, background-color 0.2s ease; 
+          white-space: nowrap;
+          border: 1px solid #E5E7EB;
+        }
+        .marcador-precio:hover { 
+          transform: scale(1.1); 
+          background-color: #f7f7f7; 
+          color: #ff6b00; 
+        }
         
         /* UI Buscador y Botones */
-        /* AQUÍ FUE EL CAMBIO: left: 24px en lugar de 50%, y quitamos el transform */
         .search-box { position: absolute; top: 24px; left: 24px; z-index: 10; width: 340px; max-width: 90vw; }
-        /* AQUÍ FUE EL CAMBIO: text-align: left para que el logo acompañe la esquina */
         .logo-pill { text-align: left; margin-bottom: 10px; padding-left: 10px; } 
-        .logo-pill span { background: linear-gradient(135deg, #FF6B35, #FF8C5A); color: #fff; font-weight: 900; font-size: 14px; padding: 5px 16px; border-radius: 20px; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(255,107,53,0.4); }
+
+        {/* MODIFICADO: Nuevos estilos para la píldora naranja que contiene el SVG */}
+        .logo-pill-inner { 
+          display: inline-flex; /* Centrado vertical */
+          align-items: center; 
+          background: linear-gradient(135deg, #ff6b00, #ff6b00); 
+          border-radius: 20px; 
+          padding: 8px 20px; /* Ajustamos padding para el SVG */
+          box-shadow: 0 2px 8px rgba(255,107,53,0.4); 
+        }
+
+        {/* MODIFICADO: Estilos para controlar el tamaño del SVG */}
+        .logo-svg {
+          height: 20px; /* Ajusta la altura del SVG para que quepa bien en la píldora */
+          width: auto; /* Mantiene la proporción */
+          color: #fff; /* Asegura que el logo herede el blanco si usa currentColor */
+        }
+        
         .input-wrapper { display: flex; align-items: center; background: #fff; border-radius: 24px; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1.5px solid rgba(255,107,53,0.15); }
         .input-wrapper input { border: none; width: 100%; font-size: 14px; font-weight: 500; color: #1A1A1A; outline: none; } .input-wrapper input::placeholder { color: #9CA3AF; }
         .sugg-hbox { margin-top: 8px; background: #fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; }
@@ -139,7 +179,13 @@ export default function Hoteleria({ onAbrirDetalles }) {
 
       {/* Interfaz Gráfica */}
       <div className="search-box ui-font">
-        <div className="logo-pill"><span>EXPLORA</span></div>
+        {/* MODIFICADO: Cambiamos el <span> con texto por el SVG con una nueva clase contenedora */}
+        <div className="logo-pill">
+          <span className="logo-pill-inner">
+            <img src={exploraLogo} className="logo-svg" alt="Explora Logo" />
+          </span>
+        </div>
+
         <div className="input-wrapper">
           <span style={{ marginRight: '10px' }}>🔍</span>
           <input className="ui-font" type="text" placeholder="Buscar destino o alojamiento..." value={busqueda} onChange={e => buscar(e.target.value)} />
