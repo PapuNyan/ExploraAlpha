@@ -69,7 +69,7 @@ export default function Hoteleria({ onAbrirDetalles }) {
       map.current.addSource('boketto-src', { type: 'geojson', data: bokettoPoly });
       map.current.addLayer({
         id: 'boketto-layer', type: 'fill-extrusion', source: 'boketto-src',
-        paint: { 'fill-extrusion-color': '#f34ef3', 'fill-extrusion-height': 15, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.9 }
+        paint: { 'fill-extrusion-color': '#ff6b00', 'fill-extrusion-height': 15, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.9 }
       });
       
       map.current.on('click', 'boketto-layer', () => {
