@@ -1,2 +1,87 @@
-/* App.css — limpio, toda la UI usa CSS-in-JS / variables de index.css */
-* { box-sizing: border-box; }
+/* --- Variables Globales de Diseño --- */
+:root {
+  --black: #1A1A1A;
+  --white: #FFFFFF;
+  --gray-100: #F3F4F6;
+  --gray-500: #6B7280;
+  --gray-700: #374151;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* --- Reset y Estilos Base --- */
+* { 
+  box-sizing: border-box; 
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background-color: #000;
+  color: var(--white);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Personalización del Calendario (Aportación de Valdo) --- */
+.react-datepicker-wrapper { 
+  width: 100%; 
+  display: block; 
+}
+
+.react-datepicker {
+  font-family: var(--font) !important;
+  border: none !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+  overflow: hidden;
+}
+
+.react-datepicker__header {
+  background-color: white !important;
+  border-bottom: 1px solid var(--gray-100) !important;
+  padding-top: 15px !important;
+}
+
+/* --- Animaciones y Efectos --- */
+.story-arrow {
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-arrow:hover {
+  background-color: rgba(255,255,255,0.3) !important;
+  transform: scale(1.1);
+}
+
+.hotel-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hotel-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Scrollbar minimalista para el visor */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
