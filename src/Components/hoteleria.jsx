@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
+import exploraLogo from './ExploraNaranja.png';
+
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-const BRAND = '#FF6B35';
+const BRAND = '#ff6b00';
 
 // --- 1. BASE DE DATOS COMPACTADA ---
 const ubicaciones = {
-  elim: { nombre: "Casa de playa ELIM", lngLat: [-97.31908, 20.99095], precio: "$2,000 MXN", etiqueta: "4.9 ★", reviews: "15 reseñas", subtitulo: "Lugar completo · Tuxpan, Ver.", colorTema: BRAND, marcadorImg: "url('/hotelElim.png')", imagenPopup: "/hotelElim.png", marcadorHtml: "" },
+  elim: { nombre: "Casa de playa ELIM", lngLat: [-97.31908, 20.99095], precio: "$2,000 MXN", etiqueta: "4.9 ★", reviews: "15 reseñas", subtitulo: "Lugar completo · Tuxpan, Ver.", colorTema: BRAND, marcadorImg: "url('/media-elim/hotelElim.png')", imagenPopup: "/media-elim/hotelElim.png", marcadorHtml: "" },
   boketto: { nombre: "Hotel Boketto", lngLat: [-97.319873, 20.990532], precio: "$2,500 MXN", etiqueta: "Nuevo", reviews: "0 reseñas", subtitulo: "Habitación privada · Tuxpan, Ver.", colorTema: "#FF6B35", marcadorImg: "url('/hotelBoketto.jpg')", imagenPopup: "/hotelBoketto.jpg", marcadorHtml: "" }
 };
 
@@ -29,12 +31,27 @@ const getPopupHtml = (id, d) => `
     </div>
   </div>`;
 
+// NUEVA FUNCIÓN PARA CALCULAR LA ESCALA DEL MARCADOR SEGÚN EL ZOOM
+const getMarkerScale = (zoom) => {
+  // A zoom 17.5 el marcador está al 100%. A medida que te alejas, el multiplicador baja
+  let scale = Math.pow(1.4, zoom - 17.5);
+  // Limitamos para que no se haga microscópico (mínimo 30%) ni inmenso (máximo 120%)
+  return Math.max(0.3, Math.min(1.2, scale));
+};
+
 const createMarker = (d) => {
-  const p = document.createElement("div"), c = document.createElement("div");
-  c.className = "marker-child"; 
-  if (d.marcadorImg !== "none") c.style.backgroundImage = d.marcadorImg;
-  else { c.style.backgroundColor = d.colorTema; c.innerHTML = d.marcadorHtml; }
-  p.appendChild(c); return p;
+  const container = document.createElement("div"); // Mapbox usa este para posicionar
+  
+  const scaler = document.createElement("div"); // Este cambia su tamaño con el zoom
+  scaler.className = "marcador-scaler";
+  
+  const c = document.createElement("div"); // Este tiene el efecto cristal y el hover
+  c.className = "marcador-precio"; 
+  c.innerHTML = d.precio; 
+  
+  scaler.appendChild(c);
+  container.appendChild(scaler); 
+  return container;
 };
 
 // --- 3. COMPONENTE PRINCIPAL ---
@@ -57,10 +74,19 @@ export default function Hoteleria({ onAbrirDetalles }) {
     map.current.on("load", () => {
       map.current.setFog({ 'color': '#bad2eb', 'high-color': '#245cdf', 'horizon-blend': 0.02, 'space-color': '#0b0b19', 'star-intensity': 0.6 });
       
+      // ESTABLECEMOS EL TAMAÑO INICIAL DE LOS MARCADORES
+      document.documentElement.style.setProperty('--marker-scale', getMarkerScale(map.current.getZoom()));
+      
+      // CREAMOS UN "ESCUCHA" PARA QUE CADA QUE EL MAPA HAGA ZOOM, SE ACTUALICE EL TAMAÑO
+      map.current.on('zoom', () => {
+        document.documentElement.style.setProperty('--marker-scale', getMarkerScale(map.current.getZoom()));
+      });
+
+      // Polígono de Boketto
       map.current.addSource('boketto-src', { type: 'geojson', data: bokettoPoly });
       map.current.addLayer({
         id: 'boketto-layer', type: 'fill-extrusion', source: 'boketto-src',
-        paint: { 'fill-extrusion-color': '#00FFFF', 'fill-extrusion-height': 15, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.9 }
+        paint: { 'fill-extrusion-color': '#ff6b00', 'fill-extrusion-height': 15, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.9 }
       });
       
       map.current.on('click', 'boketto-layer', () => {
@@ -69,6 +95,36 @@ export default function Hoteleria({ onAbrirDetalles }) {
       });
       map.current.on('mouseenter', 'boketto-layer', () => map.current.getCanvas().style.cursor = 'pointer');
       map.current.on('mouseleave', 'boketto-layer', () => map.current.getCanvas().style.cursor = '');
+
+      // MODELO 3D DE CASA ELIM
+      map.current.addModel('modelo-casa-elim', '/media-elim/casa_elim.glb');
+
+      const centroElim = [-97.31886834518423, 20.991044037890813]; 
+
+      map.current.addSource('source-casa-elim', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: centroElim
+          }
+        }
+      });
+
+      map.current.addLayer({
+        id: 'layer-casa-elim',
+        type: 'model',
+        source: 'source-casa-elim',
+        layout: {
+          'model-id': 'modelo-casa-elim'
+        },
+        paint: {
+          'model-scale': [1.5, 1.5, 1.5],          
+          'model-rotation': [0, 0, 63],       
+          'model-translation': [-12, 10, 0]     
+        }
+      });
       
       setTimeout(() => map.current?.easeTo({ pitch: 75, bearing: -60, zoom: 17.5, duration: 6000 }), 500);
     });
@@ -105,7 +161,6 @@ export default function Hoteleria({ onAbrirDetalles }) {
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap');
         .ui-font { font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        /* Popups de Mapbox */
         .explora-popup .mapboxgl-popup-content { padding: 0 !important; background: transparent !important; box-shadow: none !important; border-radius: 16px !important; }
         .explora-popup .mapboxgl-popup-tip { border-top-color: white !important; }
         .popup-card { width: 260px; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.14); background: #fff; }
@@ -117,19 +172,44 @@ export default function Hoteleria({ onAbrirDetalles }) {
         .price-row strong { font-weight: 900; color: #1A1A1A; font-size: 14px; } .price-row small, .reviews { color: #6B7280; font-size: 12px; }
         .popup-body button { width: 100%; padding: 10px; border: none; border-radius: 10px; color: #fff; font-weight: 800; font-size: 13px; cursor: pointer; }
         
-        /* Animación Marcadores */
-        .marker-child { width: 48px; height: 48px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; background: #E5E7EB center/cover; }
-        .marker-child:hover { transform: scale(1.15); }
+        /* CONTENEDOR QUE ESCALA CON EL ZOOM */
+        .marcador-scaler {
+          transform: scale(var(--marker-scale, 1));
+          transform-origin: center center;
+          will-change: transform;
+        }
+
+        /* ESTILOS DEL MARCADOR EFECTO CRISTAL (SE MANTIENE FLUIDO) */
+        .marcador-precio { 
+          background-color: rgba(255, 255, 255, 0.75); 
+          backdrop-filter: blur(8px); 
+          -webkit-backdrop-filter: blur(8px);
+          color: #1A1A1A; 
+          font-weight: 800; 
+          padding: 6px 12px; 
+          border-radius: 20px; 
+          box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.15); 
+          cursor: pointer; 
+          font-size: 13px; 
+          transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease; 
+          white-space: nowrap; 
+          border: 1px solid rgba(255, 255, 255, 0.6); 
+        }
+        .marcador-precio:hover { 
+          transform: scale(1.12) translateY(-4px); 
+          background-color: rgba(255, 255, 255, 0.95); 
+          color: #ff6b00; 
+          box-shadow: 0px 8px 24px rgba(255, 107, 0, 0.25);
+          border: 1px solid #ff6b00;
+        }
         
-        /* UI Buscador y Botones */
-        /* AQUÍ FUE EL CAMBIO: left: 24px en lugar de 50%, y quitamos el transform */
         .search-box { position: absolute; top: 24px; left: 24px; z-index: 10; width: 340px; max-width: 90vw; }
-        /* AQUÍ FUE EL CAMBIO: text-align: left para que el logo acompañe la esquina */
         .logo-pill { text-align: left; margin-bottom: 10px; padding-left: 10px; } 
-        .logo-pill span { background: linear-gradient(135deg, #FF6B35, #FF8C5A); color: #fff; font-weight: 900; font-size: 14px; padding: 5px 16px; border-radius: 20px; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(255,107,53,0.4); }
+        .logo-pill-inner { display: inline-flex; align-items: center; background: linear-gradient(135deg, #ff6b00, #ff6b00); border-radius: 20px; padding: 8px 20px; box-shadow: 0 2px 8px rgba(255,107,53,0.4); }
+        .logo-svg { height: 20px; width: auto; color: #fff; }
         .input-wrapper { display: flex; align-items: center; background: #fff; border-radius: 24px; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1.5px solid rgba(255,107,53,0.15); }
         .input-wrapper input { border: none; width: 100%; font-size: 14px; font-weight: 500; color: #1A1A1A; outline: none; } .input-wrapper input::placeholder { color: #9CA3AF; }
-        .sugg-hbox { margin-top: 8px; background: #fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; }
+        .sugg-box { margin-top: 8px; background: #fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; }
         .sugg-item { padding: 13px 18px; cursor: pointer; border-bottom: 1px solid #F3F4F6; font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 10px; transition: background 0.15s; }
         .sugg-item:hover { background: #FFF0EB; } .sugg-icon { background: #FFF0EB; padding: 7px; border-radius: 8px; font-size: 16px; }
         
@@ -137,9 +217,13 @@ export default function Hoteleria({ onAbrirDetalles }) {
         .btn-3d:hover { background: #FFF0EB; color: #FF6B35; }
       `}</style>
 
-      {/* Interfaz Gráfica */}
       <div className="search-box ui-font">
-        <div className="logo-pill"><span>EXPLORA</span></div>
+        <div className="logo-pill">
+          <span className="logo-pill-inner">
+            <img src={exploraLogo} className="logo-svg" alt="Explora Logo" />
+          </span>
+        </div>
+
         <div className="input-wrapper">
           <span style={{ marginRight: '10px' }}>🔍</span>
           <input className="ui-font" type="text" placeholder="Buscar destino o alojamiento..." value={busqueda} onChange={e => buscar(e.target.value)} />
@@ -162,7 +246,6 @@ export default function Hoteleria({ onAbrirDetalles }) {
 
       <button className="btn-3d ui-font" onClick={alternar}>{is3D ? '🗺️ 2D' : '🏙️ 3D'}</button>
       
-      {/* Contenedor del Mapa */}
       <div ref={mapContainer} style={{ position: "absolute", inset: 0 }} />
     </>
   );
