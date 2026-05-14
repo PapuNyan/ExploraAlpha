@@ -1,199 +1,292 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Star, Wifi, Waves, Utensils, Car, Coffee, ShieldCheck, Dumbbell } from "lucide-react";
-
-import { hotels } from "../data/mockData";
+import {
+  X,
+  Star,
+  MapPin,
+  Wifi,
+  Waves,
+  Utensils,
+  Dumbbell,
+  Car,
+  Sparkles,
+  View,
+  MessageCircle,
+} from "lucide-react";
+import { reviewsByHotel } from "../data/mockData";
 import { Tour360Modal } from "./Tour360Modal";
 import { BookingModal } from "./BookingModal";
-import TourElim from "./TourElim"; 
 
-const getAmenityIcon = (name) => {
-  const iconMap = {
-    wifi: { icon: <Wifi size={20} />, label: "Wi-Fi" },
-    alberca: { icon: <Waves size={20} />, label: "Alberca" },
-    restaurante: { icon: <Utensils size={20} />, label: "Restaurante" },
-    spa: { icon: <Star size={20} />, label: "Spa" },
-    gimnasio: { icon: <Dumbbell size={20} />, label: "Gimnasio" },
-    estacionamiento: { icon: <Car size={20} />, label: "Estacionamiento" },
-    seguridad: { icon: <ShieldCheck size={20} />, label: "Seguridad" }
-  };
-  const data = iconMap[name.toLowerCase()] || { icon: <Star size={20} />, label: name };
-  return data.icon;
+const amenityMap = {
+  wifi: { Icon: Wifi, label: "Wi-Fi" },
+  pool: { Icon: Waves, label: "Piscina" },
+  restaurant: { Icon: Utensils, label: "Restaurante" },
+  spa: { Icon: Sparkles, label: "Spa" },
+  gym: { Icon: Dumbbell, label: "Gimnasio" },
+  parking: { Icon: Car, label: "Estacionamiento" },
 };
 
-export const HotelDetailModal = ({ hotel: initialHotel, open, onClose }) => {
+const TABS = [
+  { id: "desc", label: "Descripción" },
+  { id: "amen", label: "Amenidades" },
+  { id: "ubic", label: "Ubicación" },
+  { id: "rev", label: "Reseñas" },
+];
+
+export const HotelDetailModal = ({ hotel, open, onClose, initialAction }) => {
+  const [tab, setTab] = useState("desc");
+  const [activeMedia, setActiveMedia] = useState(0);
   const [tourOpen, setTourOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('Descripción');
-  const [activeImg, setActiveImg] = useState(null);
-
-  const hotel = hotels.find(h => h.id === initialHotel?.id) || initialHotel;
 
   useEffect(() => {
-    if (hotel) setActiveImg(hotel.image);
-  }, [hotel]);
+    if (open) {
+      setTab("desc");
+      setActiveMedia(0);
+      setTourOpen(false);
+      setBookOpen(initialAction === "book");
+    }
+  }, [open, initialAction, hotel?.id]);
 
-  if (!hotel) return null;
+  const reviews = reviewsByHotel.default;
+  const media = hotel ? [hotel.image, ...hotel.gallery] : [];
+
+  const adapted = hotel
+    ? { ...hotel, hotel: hotel.name, country: hotel.location }
+    : null;
 
   return (
     <AnimatePresence>
-      {open && (
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm overflow-y-auto pt-10"
+      {open && hotel && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          data-testid="hotel-detail-modal"
+          className="fixed inset-0 z-[55] overflow-y-auto bg-black/40 backdrop-blur-md"
           onClick={onClose}
         >
-          <motion.div 
-            initial={{ y: 100 }} animate={{ y: 0 }}
-            className="relative mx-auto mb-20 w-[95%] max-w-5xl bg-white rounded-[32px] overflow-hidden shadow-2xl"
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 30, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             onClick={(e) => e.stopPropagation()}
+            className="mx-auto my-6 w-[min(96vw,1100px)] overflow-hidden rounded-2xl border border-gray-200 bg-white pb-24 shadow-[0_30px_80px_rgba(17,24,39,0.18)]"
           >
-            <button onClick={onClose} className="absolute right-6 top-6 z-20 bg-white/80 backdrop-blur-md p-3 rounded-full hover:bg-white transition-all">
-              <X size={24} className="text-gray-800" />
+            <button
+              onClick={onClose}
+              data-testid="close-hotel-detail"
+              className="fixed right-6 top-6 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition-colors hover:bg-gray-50"
+            >
+              <X className="h-5 w-5" />
             </button>
 
-            {/* IMAGEN PRINCIPAL */}
-            <div className="h-[400px] w-full overflow-hidden bg-gray-100 relative">
-              <AnimatePresence mode="wait">
-                <motion.img 
-                  key={activeImg}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  src={activeImg || hotel.image} 
-                  className="h-full w-full object-cover" 
-                  alt={hotel.name} 
-                />
-              </AnimatePresence>
+            <div className="relative">
+              <div
+                className="aspect-[16/9] w-full bg-cover bg-center transition-all duration-500"
+                style={{ backgroundImage: `url(${media[activeMedia]})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <button
+                onClick={() => setTourOpen(true)}
+                data-testid="hotel-360-cta"
+                className="absolute bottom-6 right-6 flex items-center gap-2 rounded-xl bg-[#FF6B2B] px-4 py-2.5 font-[Manrope] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(255,107,43,0.4)] transition-all hover:bg-[#E55A1F]"
+              >
+                <View className="h-4 w-4" /> Ver Tour 360°
+              </button>
             </div>
 
-            <div className="p-10">
-              
-              {/* SECCIÓN DE HIGHLIGHTS  */}
-<div className="flex gap-6 overflow-x-auto pb-8 mb-4 no-scrollbar">
-  {hotel.highlights?.map((item, idx) => (
-    <button 
-      key={idx}
-      onClick={() => setActiveImg(item.image || item.img || item.url)} // Intenta diferentes nombres de propiedad
-      className="flex-shrink-0 group flex flex-col items-center gap-3"
-    >
-      <div className={`w-20 h-20 rounded-full p-1 border-2 transition-all duration-300 ${
-        (activeImg === item.image || activeImg === item.img) 
-        ? 'border-[#FF6B2B] scale-110 shadow-lg' 
-        : 'border-transparent group-hover:border-gray-200'
-      }`}>
-        <img 
-          src={item.image || item.img || item.url} 
-          className="w-full h-full object-cover rounded-full bg-gray-200" 
-          alt={item.title}
-          onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=Error'; }} // Imagen de error si no carga
-        />
-      </div>
-      <span className={`text-[10px] font-black uppercase tracking-tighter transition-colors ${
-        (activeImg === item.image || activeImg === item.img) ? 'text-[#FF6B2B]' : 'text-gray-400'
-      }`}>
-        {item.title}
-      </span>
-    </button>
-  ))}
-</div>
+            <div className="flex gap-2 overflow-x-auto px-6 py-3">
+              {media.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveMedia(i)}
+                  data-testid={`hotel-thumb-${i}`}
+                  className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
+                    i === activeMedia
+                      ? "border-[#FF6B2B]"
+                      : "border-gray-200 hover:border-gray-400"
+                  }`}
+                  style={{
+                    backgroundImage: `url(${m})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+              ))}
+            </div>
 
-              <div className="flex justify-between items-start mb-8">
-                <div>
-                  <h2 className="text-5xl font-black text-gray-900">{hotel.name}</h2>
-                  <p className="flex items-center gap-2 text-gray-500 mt-2 text-lg">
-                    <MapPin size={20} className="text-[#FF6B2B]" /> {hotel.location}
-                  </p>
-                </div>
-                <div className="bg-orange-50 px-5 py-2 rounded-2xl flex items-center gap-2 border border-orange-100">
-                  <Star className="fill-[#FF6B2B] text-[#FF6B2B]" size={22} />
-                  <span className="text-xl font-bold text-[#FF6B2B]">{hotel.rating}</span>
-                </div>
+            <div className="border-b border-gray-200 px-6 pb-5 pt-2">
+              <div className="font-[Manrope] text-[11px] uppercase tracking-[0.2em] text-[#FF6B2B]">
+                {hotel.category}
               </div>
+              <h2 className="font-[Outfit] text-3xl font-black text-gray-900 sm:text-4xl">
+                {hotel.name}
+              </h2>
+              <div className="mt-1 flex flex-wrap items-center gap-3 font-[Manrope] text-sm">
+                <span className="flex items-center gap-1.5 text-gray-600">
+                  <MapPin className="h-3.5 w-3.5" /> {hotel.location}
+                </span>
+                <span className="flex items-center gap-1 text-gray-900">
+                  <Star className="h-3.5 w-3.5 fill-[#FF6B2B] text-[#FF6B2B]" />
+                  {hotel.rating.toFixed(2)}
+                </span>
+              </div>
+            </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 border-t pt-10">
-                <div className="lg:col-span-2">
-                  <div className="flex gap-8 border-b border-gray-100 mb-8">
-                    {['Descripción', 'Amenidades', 'Ubicación'].map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`pb-4 text-lg font-bold transition-all relative ${
-                          activeTab === tab ? 'text-[#FF6B2B]' : 'text-gray-400'
-                        }`}
+            <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-4">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  data-testid={`hotel-tab-${t.id}`}
+                  className={`relative shrink-0 px-4 py-3 font-[Manrope] text-sm font-semibold transition-colors ${
+                    tab === t.id ? "text-gray-900" : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  {t.label}
+                  {tab === t.id && (
+                    <motion.span
+                      layoutId="hotel-tab-line"
+                      className="absolute inset-x-3 -bottom-px h-[2px] rounded-full bg-[#FF6B2B]"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="min-h-[180px] px-6 py-6">
+              {tab === "desc" && (
+                <p className="font-[Manrope] text-base leading-relaxed text-gray-700">
+                  {hotel.description}
+                </p>
+              )}
+              {tab === "amen" && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {hotel.amenities.map((a) => {
+                    const meta = amenityMap[a];
+                    if (!meta) return null;
+                    return (
+                      <div
+                        key={a}
+                        className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4"
                       >
-                        {tab}
-                        {activeTab === tab && (
-                          <motion.div layoutId="underline" className="absolute bottom-0 left-0 right-0 h-1 bg-[#FF6B2B] rounded-full" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeTab}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="min-h-[250px]"
+                        <meta.Icon className="h-5 w-5 text-[#FF6B2B]" />
+                        <span className="font-[Manrope] text-sm font-medium text-gray-900">
+                          {meta.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {tab === "ubic" && (
+                <div className="overflow-hidden rounded-xl border border-gray-200">
+                  <iframe
+                    title="map"
+                    className="h-[280px] w-full"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${
+                      hotel.coords.lng - 0.05
+                    }%2C${hotel.coords.lat - 0.05}%2C${
+                      hotel.coords.lng + 0.05
+                    }%2C${hotel.coords.lat + 0.05}&layer=mapnik&marker=${
+                      hotel.coords.lat
+                    }%2C${hotel.coords.lng}`}
+                  />
+                </div>
+              )}
+              {tab === "rev" && (
+                <div className="space-y-3">
+                  {reviews.map((r) => (
+                    <div
+                      key={r.id}
+                      className="rounded-xl border border-gray-200 bg-gray-50 p-4"
                     >
-                      {activeTab === 'Descripción' && (
-                        <p className="text-gray-600 text-lg leading-relaxed">{hotel.description}</p>
-                      )}
-
-                      {activeTab === 'Amenidades' && (
-                        <div className="grid grid-cols-2 gap-4">
-                          {hotel.amenities?.map((am) => (
-                            <div key={am} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#FF6B2B]">
-                                {getAmenityIcon(am)}
-                              </div>
-                              <span className="font-bold text-gray-700 capitalize">{am}</span>
-                            </div>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={r.avatar}
+                          alt={r.author}
+                          className="h-10 w-10 rounded-full border border-gray-200"
+                        />
+                        <div className="flex-1">
+                          <div className="font-[Manrope] text-sm font-semibold text-gray-900">
+                            {r.author}
+                          </div>
+                          <div className="font-[Manrope] text-xs text-gray-500">
+                            {r.date}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-3 w-3 ${
+                                i < r.rating
+                                  ? "fill-[#FF6B2B] text-[#FF6B2B]"
+                                  : "text-[#FF6B2B]/25"
+                              }`}
+                            />
                           ))}
                         </div>
-                      )}
-
-                      {activeTab === 'Ubicación' && (
-                        <div className="space-y-4">
-                          <div className="w-full h-[350px] bg-slate-100 rounded-[32px] overflow-hidden relative border-4 border-white shadow-xl">
-                            <TourElim 
-                              lat={hotel.coords?.lat} 
-                              lng={hotel.coords?.lng} 
-                            />
-                          </div>
-                          <div className="flex justify-between items-center p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                              <span className="text-orange-900 font-bold text-sm">Ubicación GPS Confirmada</span>
-                            </div>
-                            <code className="text-[#FF6B2B] font-mono font-bold bg-white px-3 py-1 rounded-lg shadow-sm text-xs">
-                              {hotel.coords?.lat}, {hotel.coords?.lng}
-                            </code>
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
+                      </div>
+                      <p className="mt-3 font-[Manrope] text-sm leading-relaxed text-gray-700">
+                        {r.comment}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="bg-gray-50 p-8 rounded-[32px] border border-gray-100 h-fit sticky top-4">
-                  <span className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Precio estimado</span>
-                  <div className="flex items-baseline gap-1 mt-1 mb-8">
-                    <span className="text-4xl font-black text-[#FF6B2B]">${hotel.price}</span>
-                    <span className="text-gray-500 font-medium">/ noche</span>
-                  </div>
-                  <button onClick={() => setBookOpen(true)} className="w-full bg-[#FF6B2B] text-white py-5 rounded-2xl font-black text-xl shadow-xl shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                    Reservar Ahora
-                  </button>
-                  <p className="text-center text-gray-400 text-xs mt-4 font-medium">No se te cobrará nada todavía</p>
-                </div>
-              </div>
+              )}
             </div>
           </motion.div>
+
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-x-0 bottom-0 z-[56] border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(17,24,39,0.06)]"
+          >
+            <div className="mx-auto flex w-[min(96vw,1100px)] items-center gap-3">
+              <div className="flex-1">
+                <div className="font-[Manrope] text-[10px] uppercase tracking-[0.18em] text-gray-500">
+                  Por noche
+                </div>
+                <div className="font-[Outfit] text-xl font-bold text-[#FF6B2B]">
+                  ${hotel.price.toLocaleString()}
+                </div>
+              </div>
+              
+              <a
+                href={`https://wa.me/525555555555?text=Quiero%20info%20sobre%20${encodeURIComponent(hotel.name)}`}
+                target="_blank"
+                rel="noreferrer"
+                data-testid="hotel-whatsapp"
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 bg-white text-[#25D366] transition-colors hover:bg-gray-50"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </a>
+              <button
+                onClick={() => setBookOpen(true)}
+                data-testid="hotel-book-now"
+                className="flex-[2] rounded-xl bg-[#FF6B2B] px-6 py-3 font-[Manrope] text-sm font-bold text-white shadow-[0_10px_30px_rgba(255,107,43,0.35)] transition-all hover:bg-[#E55A1F]"
+              >
+                Reservar Ahora
+              </button>
+            </div>
+          </div>
+
+          <Tour360Modal
+            open={tourOpen}
+            destination={adapted}
+            onClose={() => setTourOpen(false)}
+          />
+          <BookingModal
+            open={bookOpen}
+            destination={adapted}
+            onClose={() => setBookOpen(false)}
+          />
         </motion.div>
       )}
-      <Tour360Modal open={tourOpen} destination={hotel} onClose={() => setTourOpen(false)} />
-      <BookingModal open={bookOpen} destination={hotel} onClose={() => setBookOpen(false)} />
     </AnimatePresence>
   );
 };
+
+export default HotelDetailModal;
