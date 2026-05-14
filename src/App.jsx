@@ -102,7 +102,7 @@ const hotelesInfo = {
     ubicacion: "Playa San Antonio, Tuxpan",
     distancia: "12 km del centro",
     narrativa: "Un rincón de paz frente a la playa, diseñado para relajarte y desconectar del mundo.",
-    colorTema: "#FF6B35",
+    colorTema: "#0f766e",
     rating: "Nuevo",
     reviews: "0 reseñas",
     habitaciones: [
