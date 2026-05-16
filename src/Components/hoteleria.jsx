@@ -126,6 +126,39 @@ export default function Hoteleria({ onAbrirDetalles }) {
         }
       });
       
+      // --- NUEVO MODELO 3D ---
+      // ⚠️ CAMBIA '/tu-nuevo-modelo.glb' POR LA RUTA REAL DE TU ARCHIVO
+      map.current.addModel('modelo-playaAzul', '/media-playa-azul/hotel_playaAzul.glb');
+
+      // Centro calculado a partir de tus 4 coordenadas
+      const centroNuevo = [-97.3173547, 20.986245]; 
+
+      map.current.addSource('source-hotel-nuevo', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: centroNuevo
+          }
+        }
+      });
+
+      map.current.addLayer({
+        id: 'layer-hotel-nuevo',
+        type: 'model',
+        source: 'source-hotel-nuevo',
+        layout: {
+          'model-id': 'modelo-playaAzul'
+        },
+        paint: {
+          // Ajusta estos valores si tu modelo sale muy grande, chueco o flotando
+          'model-scale': [1.5, 1.5, 1.5],          
+          'model-rotation': [0, 0, -15],       
+          'model-translation': [-15, 10, 0]     
+        }
+      });
+
       setTimeout(() => map.current?.easeTo({ pitch: 75, bearing: -60, zoom: 17.5, duration: 6000 }), 500);
     });
 
