@@ -386,7 +386,18 @@
     return null;
   }
 
-  // Display the initial scene.
-  switchScene(scenes[0]);
+  // --- INICIO DEL CÓDIGO MODIFICADO PARA REACT ---
+  var urlHash = window.location.hash.replace('#', '');
+  
+  var initialScene = scenes.filter(function(scene) {
+    return scene.data.id === urlHash;
+  })[0];
+
+  if (initialScene) {
+    switchScene(initialScene);
+  } else {
+    switchScene(scenes[0]);
+  }
+  // --- FIN DEL CÓDIGO MODIFICADO ---
 
 })();

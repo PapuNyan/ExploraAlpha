@@ -172,7 +172,9 @@ function PantallaHabitacion({ habitacion, colorTema, onVolver, onVerTour }) {
       <style>{`.react-datepicker-wrapper { width: 100%; display: block; } .react-datepicker__day--selected, .react-datepicker__day--in-selecting-range, .react-datepicker__day--in-range { background-color: ${colorTema} !important; color: white !important; border-radius: 50%; }`}</style>
       <div style={{ height: '32vh', minHeight: '220px', position: 'relative', backgroundImage: habitacion.imagen ? `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url(${habitacion.imagen})` : `linear-gradient(135deg, ${colorTema} 0%, #1A1A1A 100%)`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <button onClick={onVolver} style={{ position: 'absolute', top: '20px', left: '20px', background: 'rgba(255,255,255,0.25)', border: 'none', borderRadius: 'var(--radius-full)', padding: '8px 16px', color: 'white', fontWeight: '700', fontSize: '14px', cursor: 'pointer', backdropFilter: 'blur(8px)' }}>← Regresar</button>
-        <button onClick={onVerTour} style={{ position: 'absolute', bottom: '16px', right: '16px', background: 'white', border: 'none', borderRadius: 'var(--radius-full)', padding: '8px 16px', color: 'var(--black)', fontWeight: '800', fontSize: '13px', cursor: 'pointer' }}>🌐 Habitación 360</button>
+        
+        {/* --- CAMBIO 1: AQUÍ MANDAMOS EL NOMBRE DE LA HABITACIÓN AL HACER CLIC --- */}
+        <button onClick={() => onVerTour(habitacion.nombre)} style={{ position: 'absolute', bottom: '16px', right: '16px', background: 'white', border: 'none', borderRadius: 'var(--radius-full)', padding: '8px 16px', color: 'var(--black)', fontWeight: '800', fontSize: '13px', cursor: 'pointer' }}>🌐 Habitación 360</button>
       </div>
       <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--black)', margin: '0 0 8px 0' }}>{habitacion.nombre}</h1>
@@ -246,7 +248,8 @@ function PantallaDetalles({ hotel, onVolver, onVerTour }) {
             <div style={{ paddingRight: '16px', textAlign: 'right' }}><p style={{ fontWeight: '900', color: datos.colorTema }}>{hab.precio}</p></div>
           </div>
         ))}
-        {activeTab === 'TOUR' && <div style={{ textAlign: 'center', padding: '40px' }}><button onClick={onVerTour} style={{ background: datos.colorTema, color: 'white', padding: '12px 24px', border: 'none', borderRadius: '24px', fontWeight: '800' }}>Ver Recorrido →</button></div>}
+        {/* --- CAMBIO 2: SI ES EL TOUR GENERAL, MANDAMOS NULL PARA QUE EMPIECE EN LA ALBERCA --- */}
+        {activeTab === 'TOUR' && <div style={{ textAlign: 'center', padding: '40px' }}><button onClick={() => onVerTour(null)} style={{ background: datos.colorTema, color: 'white', padding: '12px 24px', border: 'none', borderRadius: '24px', fontWeight: '800' }}>Ver Recorrido →</button></div>}
         {activeTab === 'MEMORIES' && <div style={{ display: 'flex', gap: '16px', overflowX: 'auto' }}>{datos.memorias.map((memoria) => (<div key={memoria.id} onClick={() => setMemoriaActiva(memoria)} style={{ width: '105px', flexShrink: 0 }}><div style={{ height: '160px', borderRadius: '14px', overflow: 'hidden', border: '2px solid white' }}><img src={memoria.portada} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div><p style={{ textAlign: 'center', fontSize: '12px', fontWeight: '800' }}>{memoria.titulo}</p></div>))}</div>}
       </div>
     </div>
@@ -258,15 +261,41 @@ function App() {
   const [pantalla, setPantalla] = useState('mapa');
   const [hotelSeleccionado, setHotelSeleccionado] = useState('elim');
   const [verTourEnVivo, setVerTourEnVivo] = useState(false);
-
-  if (verTourEnVivo) return <TourElim onVolver={() => setVerTourEnVivo(false)} />;
-  if (pantalla === 'detalles') return <PantallaDetalles hotel={hotelSeleccionado} onVolver={() => setPantalla('mapa')} onVerTour={() => setVerTourEnVivo(true)} />;
+  const [habitacionParaTour, setHabitacionParaTour] = useState(null);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ flexGrow: 1, position: 'relative' }}>
-        <Hoteleria onAbrirDetalles={(idHotel) => { setHotelSeleccionado(idHotel); setPantalla('detalles'); }} />
-      </div>
+      
+      {/* CAMBIO CLAVE: El Tour ahora flota por encima de todo, sin borrar la app */}
+      {verTourEnVivo && (
+        <TourElim 
+          habitacionInicial={habitacionParaTour} 
+          onVolver={() => { 
+            setVerTourEnVivo(false); 
+            setHabitacionParaTour(null); 
+          }} 
+        />
+      )}
+
+      {/* La app decide si mostrar los detalles o el mapa interactivo en el fondo */}
+      {pantalla === 'detalles' ? (
+        <PantallaDetalles 
+          hotel={hotelSeleccionado} 
+          onVolver={() => setPantalla('mapa')} 
+          onVerTour={(nombreHab) => { 
+            setHabitacionParaTour(nombreHab); 
+            setVerTourEnVivo(true); 
+          }} 
+        />
+      ) : (
+        <div style={{ flexGrow: 1, position: 'relative' }}>
+          <Hoteleria onAbrirDetalles={(idHotel) => { 
+            setHotelSeleccionado(idHotel); 
+            setPantalla('detalles'); 
+          }} />
+        </div>
+      )}
+
     </div>
   );
 }

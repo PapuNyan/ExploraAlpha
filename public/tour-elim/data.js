@@ -314,7 +314,7 @@ var APP_DATA = {
     },
     {
       "id": "7-entrada",
-      "name": "Entrada",
+      "name": "Casa",
       "levels": [
         {
           "tileSize": 256,
@@ -654,7 +654,7 @@ var APP_DATA = {
     },
     {
       "id": "15-cabaa-grande",
-      "name": "Cabaña Grande",
+      "name": "Cabaña brisa de mar",
       "levels": [
         {
           "tileSize": 256,
@@ -692,7 +692,7 @@ var APP_DATA = {
     },
     {
       "id": "16-cabaa-de-2-pisos",
-      "name": "Cabaña de 2 pisos",
+      "name": "Cabaña costa azul",
       "levels": [
         {
           "tileSize": 256,
