@@ -7,13 +7,13 @@ export default defineConfig({
     react(),
     ViteImageOptimizer({
       jpg: {
-        quality: 75, // Comprime los JPG al 75% de calidad
+        quality: 90, // Comprime los JPG al 75% de calidad
       },
       png: {
-        quality: 75, // Comprime los PNG al 75% de calidad
+        quality: 90, // Comprime los PNG al 75% de calidad
       },
       webp: {
-        quality: 80, // Comprime los WebP al 80% de calidad
+        quality: 90, // Comprime los WebP al 80% de calidad
       },
       svg: {
         multipass: true, // Optimiza el código interno de los SVG

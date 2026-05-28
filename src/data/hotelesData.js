@@ -17,8 +17,8 @@ export const ubicaciones = {
     reviews: "15 reseñas", 
     subtitulo: "Lugar completo · Tuxpan, Ver.", 
     colorTema: BRAND, 
-    marcadorImg: "url('/media-elim/hotelElim.png')", 
-    imagenPopup: "/media-elim/hotelElim.png" 
+    marcadorImg: "url('https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848956/hotelElim_bil5vz.png')", 
+    imagenPopup: "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848956/hotelElim_bil5vz.png" 
   },
   boketto: { 
     nombre: "Hotel Boketto", 
@@ -51,8 +51,13 @@ export const hotelesInfo = {
     distancia: "9 km del centro",
     narrativa: "Disfruta de una experiencia única frente al mar con acceso privado a la playa y todas las comodidades de un hogar.",
     galeria: [
-      "/media-elim/CasaElim.jpg", "/media-elim/CasaElim1.jpg", "/media-elim/CasaElim2.jpg", 
-      "/media-elim/CasaElim3.jpg", "/media-elim/CasaElim4.jpg", "/media-elim/CasaElim5.jpg", "/media-elim/CasaElim6.jpg"
+      "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848029/UnderSoulsMX1_ophlwz.jpg", 
+      "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848939/CasaElim_juq7ua.jpg", 
+      "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848940/CasaElim1_cbmich.jpg", 
+      "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848941/CasaElim2_atdyty.jpg", 
+      "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848942/CasaElim3_wpdeye.jpg", 
+      "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848943/CasaElim4_b3goav.jpg", 
+      "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848956/hotelElim_bil5vz.png"
     ],
     colorTema: "#FF6B35",
     rating: "4.9",
@@ -97,8 +102,11 @@ export const hotelesInfo = {
     ],
     memorias: [
       { 
-        id: 1, titulo: "UNDER SOULS MX", portada: '/media-elim/UnderSoulsMX1.JPG',
-        contenido: [{ tipo: "img", url: '/media-elim/UnderSoulsMX1.JPG' }, { tipo: "video", url: '/media-elim/UnderSoulsMX2.mp4' }, { tipo: "video", url: '/media-elim/UnderSoulsMX3.mp4' }]
+        id: 1, titulo: "UNDER SOULS MX", portada: 'https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848029/UnderSoulsMX1_ophlwz.jpg',
+        contenido: [{ 
+            tipo: "img", url: 'https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848029/UnderSoulsMX1_ophlwz.jpg' }, 
+          { tipo: "video", url: 'https://res.cloudinary.com/dozdbgz1h/video/upload/v1779848372/UnderSoulsMX2_lxs1f1.mp4' }, 
+          { tipo: "video", url: 'https://res.cloudinary.com/dozdbgz1h/video/upload/v1779848399/UnderSoulsMX3_o9db2t.mp4' }]
       }
     ]
   },
