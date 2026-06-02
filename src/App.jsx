@@ -111,7 +111,7 @@ function VisorMemoria({ memoria, onCerrar }) {
         {currentItem.tipo === 'img' ? (
           <img src={currentItem.url} alt="Story" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <video src={currentItem.url} autoPlay playsInline controls style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <video src={currentItem.url} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         )}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '16px 12px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)', zIndex: 20, pointerEvents: 'none' }}>
           <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
@@ -250,7 +250,7 @@ function PantallaDetalles({ hotel, onVolver, onVerTour }) {
         ))}
         {/* --- CAMBIO 2: SI ES EL TOUR GENERAL, MANDAMOS NULL PARA QUE EMPIECE EN LA ALBERCA --- */}
         {activeTab === 'TOUR' && <div style={{ textAlign: 'center', padding: '40px' }}><button onClick={() => onVerTour(null)} style={{ background: datos.colorTema, color: 'white', padding: '12px 24px', border: 'none', borderRadius: '24px', fontWeight: '800' }}>Ver Recorrido →</button></div>}
-        {activeTab === 'MEMORIES' && <div style={{ display: 'flex', gap: '16px', overflowX: 'auto' }}>{datos.memorias.map((memoria) => (<div key={memoria.id} onClick={() => setMemoriaActiva(memoria)} style={{ width: '105px', flexShrink: 0 }}><div style={{ height: '160px', borderRadius: '14px', overflow: 'hidden', border: '2px solid white' }}><img src={memoria.portada} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div><p style={{ textAlign: 'center', fontSize: '12px', fontWeight: '800' }}>{memoria.titulo}</p></div>))}</div>}
+        {activeTab === 'MEMORIES' && <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '10px' }}>{datos.memorias.map((memoria) => (<div key={memoria.id} onClick={() => setMemoriaActiva(memoria)} style={{ width: '180px', flexShrink: 0, cursor: 'pointer' }}><div style={{ height: '260px', borderRadius: '16px', border: `3px solid ${datos.colorTema}`, padding: '3px', backgroundColor: 'white', boxShadow: '0 4px 10px rgba(0,0,0,0.15)' }}><img src={memoria.portada} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '11px' }} /></div><p style={{ textAlign: 'center', fontSize: '14px', fontWeight: '800', marginTop: '8px', color: 'var(--black)' }}>{memoria.titulo}</p></div>))}</div>}
       </div>
     </div>
   );
