@@ -123,7 +123,8 @@ function VisorMemoria({ memoria, onCerrar }) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', border: '2px solid white' }}>📸</div>
+              {/* Aquí mandamos llamar tu imagen */}
+              <img src="https://res.cloudinary.com/dozdbgz1h/image/upload/v1780545954/logo_undersoulsmx_w2lhgf.jpg" alt="Logo" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid white', backgroundColor: 'white' }} />
               <div>
                 <p style={{ color: 'white', fontWeight: '800', fontSize: '13px', margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>{memoria.titulo}</p>
                 <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', margin: 0, fontWeight: '500', textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>Casa ELIM</p>
