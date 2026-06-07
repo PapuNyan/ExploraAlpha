@@ -9,7 +9,7 @@ const BRAND = '#ff6b00';
 
 // --- 1. BASE DE DATOS COMPACTADA ---
 const ubicaciones = {
-  elim: { nombre: "Casa de playa ELIM", lngLat: [-97.31908, 20.99095], precio: "$2,000 MXN", etiqueta: "4.9 ★", reviews: "15 reseñas", subtitulo: "Lugar completo · Tuxpan, Ver.", colorTema: BRAND, marcadorImg: "url('https://res.cloudinary.com/dozdbgz1h/image/upload/v1780546706/hotelElim_eic4a5.png')", imagenPopup: "https://res.cloudinary.com/dozdbgz1h/image/upload/v1779848956/hotelElim_bil5vz.png", marcadorHtml: "" },
+  elim: { nombre: "Casa de playa ELIM", lngLat: [-97.31908, 20.99095], precio: "$2,000 MXN", etiqueta: "4.9 ★", reviews: "15 reseñas", subtitulo: "Lugar completo · Tuxpan, Ver.", colorTema: BRAND, marcadorImg: "url('https://res.cloudinary.com/dozdbgz1h/image/upload/v1780546466/CasaElim10_xb1dlu.jpg')", imagenPopup: "https://res.cloudinary.com/dozdbgz1h/image/upload/v1780546466/CasaElim10_xb1dlu.jpg", marcadorHtml: "" },
   boketto: { nombre: "Hotel Boketto", lngLat: [-97.319873, 20.990532], precio: "$2,500 MXN", etiqueta: "Nuevo", reviews: "0 reseñas", subtitulo: "Habitación privada · Tuxpan, Ver.", colorTema: "#FF6B35", marcadorImg: "url('/hotelBoketto.jpg')", imagenPopup: "/hotelBoketto.jpg", marcadorHtml: "" }
 };
 

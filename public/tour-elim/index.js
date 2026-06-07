@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -399,5 +399,38 @@
     switchScene(scenes[0]);
   }
   // --- FIN DEL CÓDIGO MODIFICADO ---
+
+  // --- LÓGICA DEL BOTÓN DÍA Y NOCHE ---
+  var btnDiaNoche = document.getElementById('btn-dia-noche');
+  var esNoche = false; // Empezamos en el recorrido de día (Luna)
+
+  if (btnDiaNoche) {
+    btnDiaNoche.addEventListener('click', function() {
+      // 1. Le agregamos la clase CSS que lo hace girar y encogerse
+      btnDiaNoche.classList.add('girar-animacion');
+      
+      // 2. Invertimos el estado lógico
+      esNoche = !esNoche;
+
+      // 3. Justo a la mitad de la animación (200 milisegundos), cambiamos el emoji
+      setTimeout(function() {
+        btnDiaNoche.innerHTML = esNoche ? '☀️' : '🌙';
+      }, 200);
+
+      // 4. Al terminar la animación (400 milisegundos), le quitamos la clase 
+      // para que regrese a su tamaño original y pueda volver a ser presionado
+      setTimeout(function() {
+        btnDiaNoche.classList.remove('girar-animacion');
+        
+        // Aquí quedará listo el puente para cuando tengas tus fotos de noche
+        if(esNoche) {
+          console.log("Cargando fotos de noche...");
+        } else {
+          console.log("Cargando fotos de día...");
+        }
+      }, 400);
+    });
+  }
+  // --- FIN LÓGICA DEL BOTÓN DÍA Y NOCHE ---
 
 })();

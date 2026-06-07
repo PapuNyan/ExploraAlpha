@@ -44,8 +44,8 @@ function VisorGaleria({ imagenes, initialIndex, onCerrar }) {
             <button onClick={anterior} style={{ width: '48px', height: '48px', borderRadius: '50%', border: 'none', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(8px)' }}>❮</button>
           )}
         </div>
-        <div style={{ width: '100%', maxWidth: '900px', height: '70vh', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', backgroundColor: '#000', flexShrink: 1 }}>
-          <img src={imagenes[currentIndex]} alt={`Vista ampliada ${currentIndex + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ width: '100%', maxWidth: '900px', height: '80vh', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', backgroundColor: 'transparent', flexShrink: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img src={imagenes[currentIndex]} alt={`Vista ampliada ${currentIndex + 1}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '16px' }} />
         </div>
         <div style={{ width: '48px', flexShrink: 0, zIndex: 20 }}>
           {currentIndex < imagenes.length - 1 && (

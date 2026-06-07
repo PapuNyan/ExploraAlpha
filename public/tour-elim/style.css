@@ -43,6 +43,7 @@ a, a:hover, a:active, a:visited {
 }
 
 #titleBar {
+  display: none !important;
   position: absolute;
   top: 0;
   left: 0;
@@ -828,3 +829,35 @@ body.view-control-buttons .viewControlButton {
 .viewControlButton-6 {
   margin-left: 105px;
 }
+
+/* --- INICIO DEL DISEÑO PARA EL BOTÓN DE DÍA/NOCHE --- */
+#btn-dia-noche {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+  cursor: pointer;
+  color: white;
+  z-index: 1000;
+  transition: transform 0.4s ease, background-color 0.3s;
+  user-select: none;
+}
+
+#btn-dia-noche:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1); /* Se hace un poquito más grande al pasar el mouse */
+}
+
+/* Esta es la clase que aplicaremos con JavaScript para que gire */
+.girar-animacion {
+  transform: rotate(360deg) scale(0.5) !important;
+  opacity: 0.3;
+}
+/* --- FIN DEL DISEÑO PARA EL BOTÓN DE DÍA/NOCHE --- */
